@@ -53,6 +53,7 @@ Mat getHandMask1(const Mat& image){
     
 //    return mask;
     
+    //성능이 더 좋아짐
     inRange(YCrCb,Scalar(Y_MIN,Cr_MIN,Cb_MIN),Scalar(Y_MAX,Cr_MAX,Cb_MAX),YCrCb);
 
     imshow("YCrCb Color Space", YCrCb);
