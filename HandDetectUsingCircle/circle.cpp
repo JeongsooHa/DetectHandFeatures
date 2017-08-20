@@ -32,37 +32,37 @@ Mat getHandMask1(const Mat& image){
     // Chaning the Image Format
     cvtColor(image, YCrCb, COLOR_BGR2YCrCb);
     
-//
-//    //각 채널별로 분리
-//    vector<Mat> planes;
-//    split(YCrCb, planes);
-//
-//    //각 채널별로 화소마다 비교
-//    Mat mask(image.size(), CV_8U, Scalar(0));   //결과 마스크를 저장할 영상
-//    int nr=image.rows;    //전체 행의 수
-//    int nc=image.cols;
-//
-//    for(int i=0; i<nr; i++){
-//        uchar* CrPlane=planes[1].ptr<uchar>(i);   //Cr채널의 i번째 행 주소
-//        uchar* CbPlane=planes[2].ptr<uchar>(i);   //Cb채널의 i번째 행 주소
-//        for(int j=0; j<nc; j++){
-//            if( (minCr < CrPlane[j]) && (CrPlane[j] <maxCr) && (minCb < CbPlane[j]) && (CbPlane[j] < maxCb) )
-//                mask.at<uchar>(i, j)=255;
-//        }
-//    }
+    //
+    //    //각 채널별로 분리
+    //    vector<Mat> planes;
+    //    split(YCrCb, planes);
+    //
+    //    //각 채널별로 화소마다 비교
+    //    Mat mask(image.size(), CV_8U, Scalar(0));   //결과 마스크를 저장할 영상
+    //    int nr=image.rows;    //전체 행의 수
+    //    int nc=image.cols;
+    //
+    //    for(int i=0; i<nr; i++){
+    //        uchar* CrPlane=planes[1].ptr<uchar>(i);   //Cr채널의 i번째 행 주소
+    //        uchar* CbPlane=planes[2].ptr<uchar>(i);   //Cb채널의 i번째 행 주소
+    //        for(int j=0; j<nc; j++){
+    //            if( (minCr < CrPlane[j]) && (CrPlane[j] <maxCr) && (minCb < CbPlane[j]) && (CbPlane[j] < maxCb) )
+    //                mask.at<uchar>(i, j)=255;
+    //        }
+    //    }
     
-//    return mask;
+    //    return mask;
     
     
     imshow("YCrCb Color Space", YCrCb);
     
     // Make the test if Color of Skin meets defined color
     inRange(YCrCb,Scalar(Y_MIN,Cr_MIN,Cb_MIN),Scalar(Y_MAX,Cr_MAX,Cb_MAX),YCrCb);
-
-
+    
+    
     
     return YCrCb;
-
+    
 }
 
 
@@ -72,13 +72,13 @@ Mat getHandMask2(const Mat& image, int minCr=128, int maxCr=170, int minCb=73, i
     //컬러 공간 변환 BGR->YCrCb
     Mat YCrCb;
     cvtColor(image, YCrCb, CV_BGR2YCrCb);
-
+    
     //각 채널별로 분리
     vector<Mat> planes;
     split(YCrCb, planes);
-
+    
     Mat mask=(minCr < planes[1]) & (planes[1] < maxCr) & (minCb < planes[2]) & (planes[2] < maxCb);
-
+    
     return mask;
 }
 
@@ -88,11 +88,11 @@ Point getHandCenter(const Mat& mask, double& radius){
     //거리 변환 행렬을 저장할 변수
     Mat dst;
     distanceTransform(mask, dst, CV_DIST_L2, 5);  //결과는 CV_32SC1 타입
-
+    
     //거리 변환 행렬에서 값(거리)이 가장 큰 픽셀의 좌표와, 값을 얻어온다.
     int maxIdx[2];    //좌표 값을 얻어올 배열(행, 열 순으로 저장됨)
     minMaxIdx(dst, NULL, &radius, NULL, maxIdx, mask);   //최소값은 사용 X
-
+    
     return Point(maxIdx[1], maxIdx[0]);
 }
 
@@ -100,14 +100,14 @@ int getFingerCount(const Mat& mask, Point center, double radius, double scale=2.
     //손가락 개수를 세기 위한 원 그리기
     Mat cImg(mask.size(), CV_8U, Scalar(0));
     circle(cImg, center, radius*scale, Scalar(255));
-
+    
     //원의 외곽선을 저장할 벡터
     vector<vector<Point>> contours;
     findContours(cImg, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-
+    
     if(contours.size()==0)   //외곽선이 없을 때 == 손 검출 X
         return -1;
-
+    
     //외곽선을 따라 돌며 mask의 값이 0에서 1로 바뀌는 지점 확인
     int fingerCount=0;
     for(int i=1; i<contours[0].size(); i++){
@@ -116,7 +116,7 @@ int getFingerCount(const Mat& mask, Point center, double radius, double scale=2.
         if(mask.at<uchar>(p1.y, p1.x)==0 && mask.at<uchar>(p2.y, p2.x)>1)
             fingerCount++;
     }
-
+    
     //손목과 만나는 개수 1개 제외
     return fingerCount-1;
 }
@@ -156,7 +156,7 @@ void  detect(IplImage* imgTonedImage,IplImage* imgRealFeed) {
             }
             hull = cvConvexHull2( ptseq, 0, CV_CLOCKWISE, 0 );
             int hullcount = hull->total;
-
+            
             defects= cvConvexityDefects(ptseq,hull,storage2  );
             CvConvexityDefect* defectArray;
             int j=0;
@@ -190,59 +190,67 @@ void  detect(IplImage* imgTonedImage,IplImage* imgRealFeed) {
 }
 
 int main(){
-
-        Mat image = imread("/Users/jeongsooha/MyDesktop/testpictures/5.jpeg");
-        IplImage *orginImage = 0, *yuvImage = 0;
     
-    //imshow("Before getHandMask1", image);
-        Mat mask=getHandMask1(image);
-    //imshow("After getHandMask1 maks", mask);
-    //imshow("After getHandMask1", image);
-        erode(mask, mask, Mat(3, 3, CV_8U, Scalar(1)), Point(-1, -1), 2);
-    //imshow("After erode maks", mask);
-        double radius;
-        Point center=getHandCenter(mask, radius);
+    Mat image = imread("/Users/jeongsooha/MyDesktop/testpictures/5.jpeg");
+    Mat orginimage = image.clone();
+    //Mat detectedImg;
+    IplImage *rawImage = 0, *yuvImage = 0;
     
-        cout<<"손바닥 중심점 좌표:"<<center<<", 반지름:"<<radius<<"손가락 개수"<<getFingerCount(mask, center, radius)<<endl;
-
-        yuvImage = new IplImage(mask);
-        orginImage = new IplImage(image);
+    Mat mask=getHandMask1(image);
     
-   // imshow("Main Data image", mask);
+    //침식 함수 : 필터 내부의 가장 낮은(어두운)값으로 변환(end연산)
+    erode(mask, mask, Mat(3, 3, CV_8U, Scalar(1)), Point(-1, -1), 2);
     
-    //cvShowImage("Main Data", orginImage);
+    double radius;
+    
+    //손바닥의 중간점을 Point형으로 반환
+    Point center=getHandCenter(mask, radius);
+    
+    //손바닥 중간점을 이용해 손가락 개수를 파악
+    cout<<"손바닥 중심점 좌표:"<<center<<", 반지름:"<<radius<<"손가락 개수"<<getFingerCount(mask, center, radius)<<endl;
+    
+    yuvImage = new IplImage(mask);
+    rawImage = new IplImage(image);
+    
+    // imshow("Main Data image", mask);
+    
+    //cvShowImage("Main Data", rawImage);
     //cvShowImage("yuvImage Data", yuvImage);
     
-
-    detect(yuvImage,orginImage);
+    /***
+     *Detect hand features on rawImage
+     *IplImage를 이용해서 함수의 인자로 넘기지만 포인터 형이기 때문에
+     *IplImage to Mat을 할 필요없이 바로 image가 변한다.
+     ***/
+    detect(yuvImage,rawImage);
     
-    image = cvarrToMat(orginImage);
-        //손바닥 중심점 그리기
-        circle(image, center, 2, Scalar(0, 255, 0), -1);
-
-        //손바닥 영역 그리기
-        circle(image, center, (int)(radius*1.5), Scalar(255, 0, 0), 2);
-
+    //cvShowImage("Add Line on Image", rawImage);
+    imshow("After detect image", image);
     
-        cv::resize( image, image, cv::Size( 450, 600), 0, 0, CV_INTER_NN );
-        cv::resize( mask, mask, cv::Size( 450, 600), 0, 0, CV_INTER_NN );
-
-        //namedWindow( "Original Image With Hand Center", CV_WINDOW_AUTOSIZE );
-       // namedWindow( "mask", CV_WINDOW_AUTOSIZE );
-
-//        cvResizeWindow("Original Image With Hand Center", 350, 350);
-//        cvResizeWindow("mask", 350, 350);
-
-        //imshow("Original Image With Hand Center", image);
-       // imshow("mask", mask);
-
-
-
-        waitKey(0);
-
-
-  //  }
-
-
+    //손바닥 중심점 그리기
+    circle(image, center, 2, Scalar(0, 255, 0), -1);
+    
+    //손바닥 영역 그리기
+    circle(image, center, (int)(radius*1.5), Scalar(255, 0, 0), 2);
+    
+    
+    //cv::resize( image, image, cv::Size( 450, 600), 0, 0, CV_INTER_NN );
+    //cv::resize( mask, mask, cv::Size( 450, 600), 0, 0, CV_INTER_NN );
+    //namedWindow( "Original Image With Hand Center", CV_WINDOW_AUTOSIZE );
+    //namedWindow( "mask", CV_WINDOW_AUTOSIZE );
+    //cvResizeWindow("Original Image With Hand Center", 350, 350);
+    //cvResizeWindow("mask", 350, 350);
+    
+    imshow("Original Image With Hand Center", image);
+    imshow("mask", mask);
+    
+    
+    
+    waitKey(0);
+    
+    
+    //  }
+    
+    
 }
 
