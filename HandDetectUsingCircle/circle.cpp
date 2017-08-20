@@ -18,19 +18,19 @@
 using namespace std;
 using namespace cv;
 
-//방법1.
-//반복문으로 각 화소 모두 비교하는 방법
+// Method to get Skin Tone
 Mat getHandMask1(const Mat& image){
     //컬러 공간 변환 BGR->YCrCb
-    Mat YCrCb;
     int Y_MIN = 0;
     int Y_MAX = 255;
     int Cr_MIN = 133;
     int Cr_MAX = 173;
     int Cb_MIN = 77;
     int Cb_MAX = 127;
-
-    cvtColor(image, YCrCb, CV_BGR2YCrCb);
+    Mat YCrCb;
+    
+    // Chaning the Image Format
+    cvtColor(image, YCrCb, COLOR_BGR2YCrCb);
     
 //
 //    //각 채널별로 분리
@@ -53,17 +53,20 @@ Mat getHandMask1(const Mat& image){
     
 //    return mask;
     
-    //성능이 더 좋아짐
+    
+    imshow("YCrCb Color Space", YCrCb);
+    
+    // Make the test if Color of Skin meets defined color
     inRange(YCrCb,Scalar(Y_MIN,Cr_MIN,Cb_MIN),Scalar(Y_MAX,Cr_MAX,Cb_MAX),YCrCb);
 
-    imshow("YCrCb Color Space", YCrCb);
 
     
     return YCrCb;
 
 }
 
-//방법2.
+
+////No use Function
 //비교연산자, 논리 연산자를 이용한 방법
 Mat getHandMask2(const Mat& image, int minCr=128, int maxCr=170, int minCb=73, int maxCb=158){
     //컬러 공간 변환 BGR->YCrCb
@@ -118,17 +121,102 @@ int getFingerCount(const Mat& mask, Point center, double radius, double scale=2.
     return fingerCount-1;
 }
 
+void  detect(IplImage* imgTonedImage,IplImage* imgRealFeed) {
+    CvMemStorage* storage = cvCreateMemStorage();
+    CvSeq* first_contour = NULL;
+    CvSeq* maxitem=NULL;
+    double area=0,areamax=0;
+    int maxn=0;
+    int Nc = cvFindContours(imgTonedImage,storage,&first_contour,sizeof(CvContour),CV_RETR_LIST);
+    int n=0;
+    if(Nc>0){
+        for( CvSeq* c=first_contour; c!=NULL; c=c->h_next ){
+            area=cvContourArea(c,CV_WHOLE_SEQ );
+            if(area>areamax){
+                areamax=area;
+                maxitem=c;
+                maxn=n;
+            }
+            n++;
+        }
+        CvMemStorage* storage3 = cvCreateMemStorage(0);
+        if(areamax>5000){
+            maxitem = cvApproxPoly( maxitem, sizeof(CvContour), storage3, CV_POLY_APPROX_DP, 10, 1 );
+            CvPoint pt0;
+            CvMemStorage* storage1 = cvCreateMemStorage(0);
+            CvMemStorage* storage2 = cvCreateMemStorage(0);
+            CvSeq* ptseq = cvCreateSeq( CV_SEQ_KIND_GENERIC|CV_32SC2, sizeof(CvContour), sizeof(CvPoint), storage1 );
+            CvSeq* hull;
+            CvSeq* defects;
+            for(int i = 0; i < maxitem->total; i++ ){
+                CvPoint* p = CV_GET_SEQ_ELEM( CvPoint, maxitem, i );
+                pt0.x = p->x;
+                pt0.y = p->y;
+                cvSeqPush( ptseq, &pt0 );
+            }
+            hull = cvConvexHull2( ptseq, 0, CV_CLOCKWISE, 0 );
+            int hullcount = hull->total;
+
+            defects= cvConvexityDefects(ptseq,hull,storage2  );
+            CvConvexityDefect* defectArray;
+            int j=0;
+            for(;defects;defects = defects->h_next){
+                int nomdef = defects->total;
+                if(nomdef == 0)
+                    continue;
+                defectArray = (CvConvexityDefect*)malloc(sizeof(CvConvexityDefect)*nomdef);
+                cvCvtSeqToArray(defects,defectArray, CV_WHOLE_SEQ);
+                for(int i=0; i<nomdef; i++){
+                    printf(" defect depth for defect %d %f \n",i,defectArray[i].depth);
+                    cvLine(imgRealFeed, *(defectArray[i].start), *(defectArray[i].depth_point),CV_RGB(255,255,0),1, CV_AA, 0 );
+                    cvCircle( imgRealFeed, *(defectArray[i].depth_point), 5, CV_RGB(0,0,164), 2, 8,0);
+                    cvCircle( imgRealFeed, *(defectArray[i].start), 5, CV_RGB(0,0,164), 2, 8,0);
+                    cvLine(imgRealFeed, *(defectArray[i].depth_point), *(defectArray[i].end),CV_RGB(255,255,0),1, CV_AA, 0 );
+                }
+                char txt[]="0";
+                txt[0]='0'+nomdef-1;
+                CvFont font;
+                cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 1.0, 1.0, 0, 5, CV_AA);
+                cvPutText(imgRealFeed, txt, cvPoint(50, 50), &font, cvScalar(0, 0, 255, 0));
+                j++;
+                free(defectArray);
+            }
+            cvReleaseMemStorage( &storage );
+            cvReleaseMemStorage( &storage1 );
+            cvReleaseMemStorage( &storage2 );
+            cvReleaseMemStorage( &storage3 );
+        }
+    }
+}
+
 int main(){
 
-    Mat image = imread("/Users/jeongsooha/MyDesktop/testpictures/b3.jpeg");
-  
-               Mat mask=getHandMask1(image);
+        Mat image = imread("/Users/jeongsooha/MyDesktop/testpictures/5.jpeg");
+        IplImage *orginImage = 0, *yuvImage = 0;
+    
+    //imshow("Before getHandMask1", image);
+        Mat mask=getHandMask1(image);
+    //imshow("After getHandMask1 maks", mask);
+    //imshow("After getHandMask1", image);
         erode(mask, mask, Mat(3, 3, CV_8U, Scalar(1)), Point(-1, -1), 2);
+    //imshow("After erode maks", mask);
         double radius;
         Point center=getHandCenter(mask, radius);
-
+    
         cout<<"손바닥 중심점 좌표:"<<center<<", 반지름:"<<radius<<"손가락 개수"<<getFingerCount(mask, center, radius)<<endl;
 
+        yuvImage = new IplImage(mask);
+        orginImage = new IplImage(image);
+    
+   // imshow("Main Data image", mask);
+    
+    //cvShowImage("Main Data", orginImage);
+    //cvShowImage("yuvImage Data", yuvImage);
+    
+
+    detect(yuvImage,orginImage);
+    
+    image = cvarrToMat(orginImage);
         //손바닥 중심점 그리기
         circle(image, center, 2, Scalar(0, 255, 0), -1);
 
@@ -139,15 +227,14 @@ int main(){
         cv::resize( image, image, cv::Size( 450, 600), 0, 0, CV_INTER_NN );
         cv::resize( mask, mask, cv::Size( 450, 600), 0, 0, CV_INTER_NN );
 
-
-        namedWindow( "Original Image With Hand Center", CV_WINDOW_AUTOSIZE );
-        namedWindow( "mask", CV_WINDOW_AUTOSIZE );
+        //namedWindow( "Original Image With Hand Center", CV_WINDOW_AUTOSIZE );
+       // namedWindow( "mask", CV_WINDOW_AUTOSIZE );
 
 //        cvResizeWindow("Original Image With Hand Center", 350, 350);
 //        cvResizeWindow("mask", 350, 350);
 
-        imshow("Original Image With Hand Center", image);
-        imshow("mask", mask);
+        //imshow("Original Image With Hand Center", image);
+       // imshow("mask", mask);
 
 
 

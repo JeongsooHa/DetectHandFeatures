@@ -127,6 +127,7 @@
 //    //cvtColor(matCamFeed, gray_image, cv::COLOR_BGR2GRAY);
 //    // Get Skin Only
 //    skinMat = getSkin(matCamFeed);
+//    imshow("TEST", skinMat);
 //    //threshold( gray_image, skinMat, 127, 255, THRESH_BINARY );
 //    
 //    
