@@ -53,8 +53,9 @@ Mat getHandMask1(const Mat& image){
     
     //    return mask;
     
-    
+    /*
     imshow("YCrCb Color Space", YCrCb);
+    */
     
     // Make the test if Color of Skin meets defined color
     inRange(YCrCb,Scalar(Y_MIN,Cr_MIN,Cb_MIN),Scalar(Y_MAX,Cr_MAX,Cb_MAX),YCrCb);
@@ -65,6 +66,18 @@ Mat getHandMask1(const Mat& image){
     
 }
 
+
+double calcDistance(const CvPoint& p1,const CvPoint& p2){
+    double distance;
+    distance = sqrt((p1.x - p1.x,2) + pow(p1.y - p2.y,2));
+    return distance;
+}
+
+double calcDistance(const CvPoint& p1,const Point& p2){
+    double distance;
+    distance = sqrt((p1.x - p1.x,2) + pow(p1.y - p2.y,2));
+    return distance;
+}
 
 ////No use Function
 //비교연산자, 논리 연산자를 이용한 방법
@@ -121,7 +134,9 @@ int getFingerCount(const Mat& mask, Point center, double radius, double scale=2.
     return fingerCount-1;
 }
 
-void  detect(IplImage* imgTonedImage,IplImage* imgRealFeed) {
+
+
+void  detect(IplImage* imgTonedImage,IplImage* imgRealFeed, const Point& center) {
     CvMemStorage* storage = cvCreateMemStorage();
     CvSeq* first_contour = NULL;
     CvSeq* maxitem=NULL;
@@ -148,18 +163,21 @@ void  detect(IplImage* imgTonedImage,IplImage* imgRealFeed) {
             CvSeq* ptseq = cvCreateSeq( CV_SEQ_KIND_GENERIC|CV_32SC2, sizeof(CvContour), sizeof(CvPoint), storage1 );
             CvSeq* hull;
             CvSeq* defects;
+            //
             for(int i = 0; i < maxitem->total; i++ ){
                 CvPoint* p = CV_GET_SEQ_ELEM( CvPoint, maxitem, i );
                 pt0.x = p->x;
                 pt0.y = p->y;
                 cvSeqPush( ptseq, &pt0 );
+                //cvCircle( imgRealFeed, *p, 5, CV_RGB(0,0,50*i), 2, 8,0);
             }
             hull = cvConvexHull2( ptseq, 0, CV_CLOCKWISE, 0 );
-            int hullcount = hull->total;
+            //int hullcount = hull->total;
             
             defects= cvConvexityDefects(ptseq,hull,storage2  );
             CvConvexityDefect* defectArray;
             int j=0;
+            CvFont font;
             for(;defects;defects = defects->h_next){
                 int nomdef = defects->total;
                 if(nomdef == 0)
@@ -167,15 +185,41 @@ void  detect(IplImage* imgTonedImage,IplImage* imgRealFeed) {
                 defectArray = (CvConvexityDefect*)malloc(sizeof(CvConvexityDefect)*nomdef);
                 cvCvtSeqToArray(defects,defectArray, CV_WHOLE_SEQ);
                 for(int i=0; i<nomdef; i++){
-                    printf(" defect depth for defect %d %f \n",i,defectArray[i].depth);
+                    //printf(" defect depth for defect %d %f %d %d\n",i,defectArray[i].depth, defectArray[i].start->x,defectArray[i].start->y);
                     cvLine(imgRealFeed, *(defectArray[i].start), *(defectArray[i].depth_point),CV_RGB(255,255,0),1, CV_AA, 0 );
-                    cvCircle( imgRealFeed, *(defectArray[i].depth_point), 5, CV_RGB(0,0,164), 2, 8,0);
-                    cvCircle( imgRealFeed, *(defectArray[i].start), 5, CV_RGB(0,0,164), 2, 8,0);
+                    cvCircle( imgRealFeed, *(defectArray[i].depth_point), 5, CV_RGB(0,255,0), 2, 8,0);
+                    cvCircle( imgRealFeed, *(defectArray[i].start), 5, CV_RGB(255,0,0), 2, 8,0);
                     cvLine(imgRealFeed, *(defectArray[i].depth_point), *(defectArray[i].end),CV_RGB(255,255,0),1, CV_AA, 0 );
+                    //손바닥 중심과 손가락 끝 연결
+                    if(i!=2){
+                        cvLine(imgRealFeed, center, *(defectArray[i].start),CV_RGB(255,0,0),1, CV_AA, 0);
+                        }
+                    cvLine(imgRealFeed, center, *(defectArray[i].depth_point),CV_RGB(0,255,0),1, CV_AA, 0);
+
                 }
                 char txt[]="0";
                 txt[0]='0'+nomdef-1;
-                CvFont font;
+                if(nomdef == 6){
+                    printf("손가락 엄지손가락과 새끼손가락의 길이:\n %f \n",calcDistance(*defectArray[0].start, *defectArray[5].start));
+                    printf("중심점과 각 손가락 사이의 길이:\n %.2f %.2f %.2f %.2f \n",
+                           calcDistance(*defectArray[0].depth_point, center),
+                           calcDistance(*defectArray[5].depth_point, center),
+                           calcDistance(*defectArray[4].depth_point, center),
+                           calcDistance(*defectArray[3].depth_point, center));
+                    printf("중심점과 각 손가락 끝의 길이:\n %.2f %.2f %.2f %.2f %.2f \n",
+                           calcDistance(*defectArray[1].start, center),
+                           calcDistance(*defectArray[0].start, center),
+                           calcDistance(*defectArray[5].start, center),
+                           calcDistance(*defectArray[4].start, center),
+                           calcDistance(*defectArray[3].start, center));
+                    printf("손목길이 %f \n", calcDistance(*(defectArray[1].depth_point), *(defectArray[2].depth_point)));
+                    cvLine(imgRealFeed, *(defectArray[1].depth_point), *(defectArray[2].depth_point),CV_RGB(255,255,0),1, CV_AA, 0 );
+                    printf("중심점과 각 손목점과의 거리:\n %f %f\n",
+                           calcDistance(*defectArray[1].depth_point, center),
+                           calcDistance(*defectArray[2].depth_point, center));
+                    
+
+                }
                 cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 1.0, 1.0, 0, 5, CV_AA);
                 cvPutText(imgRealFeed, txt, cvPoint(50, 50), &font, cvScalar(0, 0, 255, 0));
                 j++;
@@ -191,8 +235,10 @@ void  detect(IplImage* imgTonedImage,IplImage* imgRealFeed) {
 
 int main(){
     
-    Mat image = imread("/Users/jeongsooha/MyDesktop/testpictures/5.jpeg");
-    Mat orginimage = image.clone();
+    //Mat image = imread("/Users/jeongsooha/MyDesktop/testpictures/5.jpeg");
+    Mat image = imread("/Users/jeongsooha/MyDesktop/testpictures/t5_p.JPG");
+    cv::resize( image, image, cv::Size( 450, 600), 0, 0, CV_INTER_NN );
+    Mat originimage = image.clone();
     //Mat detectedImg;
     IplImage *rawImage = 0, *yuvImage = 0;
     
@@ -207,7 +253,7 @@ int main(){
     Point center=getHandCenter(mask, radius);
     
     //손바닥 중간점을 이용해 손가락 개수를 파악
-    cout<<"손바닥 중심점 좌표:"<<center<<", 반지름:"<<radius<<"손가락 개수"<<getFingerCount(mask, center, radius)<<endl;
+    cout<<"손바닥 중심점 좌표:"<<center<<", 반지름:"<<radius<<", 손가락 개수"<<getFingerCount(mask, center, radius)<<endl;
     
     yuvImage = new IplImage(mask);
     rawImage = new IplImage(image);
@@ -222,13 +268,13 @@ int main(){
      *IplImage를 이용해서 함수의 인자로 넘기지만 포인터 형이기 때문에
      *IplImage to Mat을 할 필요없이 바로 image가 변한다.
      ***/
-    detect(yuvImage,rawImage);
+    detect(yuvImage,rawImage, center);
     
     //cvShowImage("Add Line on Image", rawImage);
-    imshow("After detect image", image);
+    //imshow("After detect image", image);
     
     //손바닥 중심점 그리기
-    circle(image, center, 2, Scalar(0, 255, 0), -1);
+    circle(image, center, 5, Scalar(255, 0, 0), -1);
     
     //손바닥 영역 그리기
     circle(image, center, (int)(radius*1.5), Scalar(255, 0, 0), 2);
@@ -240,10 +286,13 @@ int main(){
     //namedWindow( "mask", CV_WINDOW_AUTOSIZE );
     //cvResizeWindow("Original Image With Hand Center", 350, 350);
     //cvResizeWindow("mask", 350, 350);
-    
-    imshow("Original Image With Hand Center", image);
-    imshow("mask", mask);
-    
+   
+    /*
+    imshow("excuted erode function on mask", mask);
+    imshow("Original Image", originimage);
+    */
+    imshow("Detect points on Image", image);
+
     
     
     waitKey(0);
