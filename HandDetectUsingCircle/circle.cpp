@@ -67,16 +67,14 @@ Mat getHandMask1(const Mat& image){
 }
 
 
-double calcDistance(const CvPoint& p1,const CvPoint& p2){
-    double distance;
-    distance = sqrt((p1.x - p1.x,2) + pow(p1.y - p2.y,2));
-    return distance;
+double calcDistance(const CvPoint& p1, const CvPoint& p2){
+    int p1x = p1.x, p1y = p1.y, p2x = p2.x, p2y = p2.y;
+    return sqrt((p1x - p2x,2) + pow(p1y - p2y,2));
 }
 
-double calcDistance(const CvPoint& p1,const Point& p2){
-    double distance;
-    distance = sqrt((p1.x - p1.x,2) + pow(p1.y - p2.y,2));
-    return distance;
+double calcDistance(const CvPoint& p1, const Point& p2){
+    int p1x = p1.x, p1y = p1.y, p2x = (double)p2.x, p2y = (double)p2.y;
+    return sqrt((p1x - p2x,2) + pow(p1y - p2y,2));
 }
 
 ////No use Function
@@ -178,6 +176,7 @@ void  detect(IplImage* imgTonedImage,IplImage* imgRealFeed, const Point& center)
             CvConvexityDefect* defectArray;
             int j=0;
             CvFont font;
+            char txt[]="0";
             for(;defects;defects = defects->h_next){
                 int nomdef = defects->total;
                 if(nomdef == 0)
@@ -185,38 +184,45 @@ void  detect(IplImage* imgTonedImage,IplImage* imgRealFeed, const Point& center)
                 defectArray = (CvConvexityDefect*)malloc(sizeof(CvConvexityDefect)*nomdef);
                 cvCvtSeqToArray(defects,defectArray, CV_WHOLE_SEQ);
                 for(int i=0; i<nomdef; i++){
+                    txt[0]='0'+i;
                     //printf(" defect depth for defect %d %f %d %d\n",i,defectArray[i].depth, defectArray[i].start->x,defectArray[i].start->y);
                     cvLine(imgRealFeed, *(defectArray[i].start), *(defectArray[i].depth_point),CV_RGB(255,255,0),1, CV_AA, 0 );
                     cvCircle( imgRealFeed, *(defectArray[i].depth_point), 5, CV_RGB(0,255,0), 2, 8,0);
                     cvCircle( imgRealFeed, *(defectArray[i].start), 5, CV_RGB(255,0,0), 2, 8,0);
                     cvLine(imgRealFeed, *(defectArray[i].depth_point), *(defectArray[i].end),CV_RGB(255,255,0),1, CV_AA, 0 );
                     //손바닥 중심과 손가락 끝 연결
-                    if(i!=2){
+                    //if(i!=2){
                         cvLine(imgRealFeed, center, *(defectArray[i].start),CV_RGB(255,0,0),1, CV_AA, 0);
-                        }
+                    //}
                     cvLine(imgRealFeed, center, *(defectArray[i].depth_point),CV_RGB(0,255,0),1, CV_AA, 0);
-
+                    cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 0.7, 0.7, 0, 2, CV_AA);
+                    cvPutText(imgRealFeed, txt, *(defectArray[i].depth_point), &font, cvScalar(0, 255, 0, 0));
+                    cvPutText(imgRealFeed, txt, *(defectArray[i].start), &font, cvScalar(0, 0, 255, 0));
+                    
                 }
-                char txt[]="0";
+                //txt[]="0";
                 txt[0]='0'+nomdef-1;
+                
+                //손가락이 5개일때만 적용
                 if(nomdef == 6){
-                    printf("손가락 엄지손가락과 새끼손가락의 길이:\n %f \n",calcDistance(*defectArray[0].start, *defectArray[5].start));
+                    printf("%d %d \n",defectArray[1].depth_point->x,defectArray[1].depth_point->y);
+                    printf("엄지손가락과 새끼손가락의 길이:\n %f \n",calcDistance(*(defectArray[1].start), *(defectArray[3].start)));
                     printf("중심점과 각 손가락 사이의 길이:\n %.2f %.2f %.2f %.2f \n",
-                           calcDistance(*defectArray[0].depth_point, center),
-                           calcDistance(*defectArray[5].depth_point, center),
-                           calcDistance(*defectArray[4].depth_point, center),
-                           calcDistance(*defectArray[3].depth_point, center));
+                           calcDistance(*(defectArray[0].depth_point), center),
+                           calcDistance(*(defectArray[5].depth_point), center),
+                           calcDistance(*(defectArray[4].depth_point), center),
+                           calcDistance(*(defectArray[3].depth_point), center));
                     printf("중심점과 각 손가락 끝의 길이:\n %.2f %.2f %.2f %.2f %.2f \n",
-                           calcDistance(*defectArray[1].start, center),
-                           calcDistance(*defectArray[0].start, center),
-                           calcDistance(*defectArray[5].start, center),
-                           calcDistance(*defectArray[4].start, center),
-                           calcDistance(*defectArray[3].start, center));
+                           calcDistance(*(defectArray[1].start), center),
+                           calcDistance(*(defectArray[0].start), center),
+                           calcDistance(*(defectArray[5].start), center),
+                           calcDistance(*(defectArray[4].start), center),
+                           calcDistance(*(defectArray[3].start), center));
                     printf("손목길이 %f \n", calcDistance(*(defectArray[1].depth_point), *(defectArray[2].depth_point)));
                     cvLine(imgRealFeed, *(defectArray[1].depth_point), *(defectArray[2].depth_point),CV_RGB(255,255,0),1, CV_AA, 0 );
                     printf("중심점과 각 손목점과의 거리:\n %f %f\n",
-                           calcDistance(*defectArray[1].depth_point, center),
-                           calcDistance(*defectArray[2].depth_point, center));
+                           calcDistance(*(defectArray[1].depth_point), center),
+                           calcDistance(*(defectArray[2].depth_point), center));
                     
 
                 }
