@@ -264,8 +264,9 @@ void  detect(IplImage* imgTonedImage,IplImage* imgRealFeed, const Point& center)
 
 int main(){
     
-    Mat image = imread("/Users/jeongsooha/MyDesktop/testpictures/t3.JPG");
+    Mat image = imread("/Users/jeongsooha/MyDesktop/testpictures/ft5_p.JPG");
     //Mat image = imread("./ft5_p.JPG");
+    //imshow("test", image);
     cv::resize( image, image, cv::Size( 450, 600), 0, 0, CV_INTER_NN );
     Mat originimage = image.clone();
     //Mat detectedImg;
