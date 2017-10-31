@@ -232,31 +232,31 @@ String detect(IplImage* imgTonedImage,IplImage* imgRealFeed, const Point& center
     return info;
 }
 
+//텍스트 파일에 저장
 void writeFile(String savePath, String info){
-    cout << "writeFile" <<endl;
-    ofstream writeFile(savePath.data());
-    if( writeFile.is_open() ){
-        writeFile << "info";
-        writeFile.close();
-    }
+    cout << "writeFile..." <<endl;
+    ofstream output;
+    output.open(savePath);
+    output << info << endl;
+    output.close();
 }
 
 int main(){
     String info="";
-    //이미지가 저장되어 있는  PATH
+    //이미지가 저장되어 있는 PATH
     String filePath = "/Users/jeongsooha/MyDesktop/testpictures/";
     //txt파일을 저장할 PATH
     String savePath = "/Users/jeongsooha/MyDesktop/testpictures/";
     
     //불러올 이미지 이름
-    String imgName = "ft5_p";
+    String imgName = "ft5";
     
     //테스트할 이미지
     //Xcode에서는 PATH 설정에 유의
     Mat image = imread(filePath+imgName+".JPG");
     
     //txt를 저장할 PATH 설정
-    String text = savePath+imgName+".txt";
+    savePath = savePath+imgName+".txt";
     
     //이미지 크기 변환
     cv::resize( image, image, cv::Size( 450, 600), 0, 0, CV_INTER_NN );
@@ -274,7 +274,8 @@ int main(){
     
     //손바닥의 중간점을 Point형으로 반환
     Point center=getHandCenter(mask, radius);
-    
+    info = "손바닥 중심점 좌표 : "+to_string(center.x)+", "+to_string(center.y)+"\n";
+    info = info + "반지름 : "+to_string(radius)+"\n";
     //손바닥 중간점을 이용해 손가락 개수를 파악
     int fingernum = getFingerCount(mask, center, radius);
     
@@ -288,7 +289,7 @@ int main(){
      * IplImage를 이용해서 함수의 인자로 넘기지만 포인터 형이기 때문에
      * IplImage to Mat을 할 필요없이 바로 image가 변한다.
      ***/
-    info = detect(yuvImage,rawImage, center);
+    info = info + detect(yuvImage,rawImage, center);
     
     //손가락 갯수를 창에 표시
     char txt[]="0";
@@ -296,7 +297,7 @@ int main(){
     txt[0]='0'+fingernum;
     cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 1.0, 1.0, 0, 5, CV_AA);
     cvPutText(rawImage, txt, cvPoint(50, 50), &font, cvScalar(0, 0, 255, 0));
-    
+
     info = info +"손가락 개수 : "+ to_string(fingernum);
     
     //손바닥 중심점 그리기
@@ -305,10 +306,10 @@ int main(){
     //손바닥 영역 그리기
     circle(image, center, (int)(radius*1.5), Scalar(255, 0, 0), 2);
     
+    //이미지에 대한 정보가 테스트 파일에 저장
     writeFile(savePath, info);
     
     imshow("Detect points on Image", image);
-    
 
     waitKey(0);
     
