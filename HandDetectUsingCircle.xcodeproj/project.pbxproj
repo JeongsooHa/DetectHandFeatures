@@ -62,7 +62,6 @@
 		87C255B71FA8591D00E327F8 /* libopencv_features2d.2.4.13.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C255811FA8591C00E327F8 /* libopencv_features2d.2.4.13.dylib */; };
 		87C255B81FA8591D00E327F8 /* libopencv_calib3d.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C255821FA8591C00E327F8 /* libopencv_calib3d.dylib */; };
 		87C255B91FA8591D00E327F8 /* libopencv_ocl.2.4.13.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C255831FA8591C00E327F8 /* libopencv_ocl.2.4.13.dylib */; };
-		87FDD2C91F3ED7B600A04064 /* line.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 87FDD2C81F3ED7B600A04064 /* line.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -134,7 +133,6 @@
 		87C255811FA8591C00E327F8 /* libopencv_features2d.2.4.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_features2d.2.4.13.dylib; path = ../../../../usr/local/lib/libopencv_features2d.2.4.13.dylib; sourceTree = "<group>"; };
 		87C255821FA8591C00E327F8 /* libopencv_calib3d.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_calib3d.dylib; path = ../../../../usr/local/lib/libopencv_calib3d.dylib; sourceTree = "<group>"; };
 		87C255831FA8591C00E327F8 /* libopencv_ocl.2.4.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_ocl.2.4.13.dylib; path = ../../../../usr/local/lib/libopencv_ocl.2.4.13.dylib; sourceTree = "<group>"; };
-		87FDD2C81F3ED7B600A04064 /* line.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = line.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -276,7 +274,6 @@
 			isa = PBXGroup;
 			children = (
 				8780D8CA1F3ED3A900CD64D4 /* circle.cpp */,
-				87FDD2C81F3ED7B600A04064 /* line.cpp */,
 			);
 			path = HandDetectUsingCircle;
 			sourceTree = "<group>";
@@ -339,7 +336,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				8780D8CB1F3ED3A900CD64D4 /* circle.cpp in Sources */,
-				87FDD2C91F3ED7B600A04064 /* line.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

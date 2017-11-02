@@ -213,7 +213,7 @@ String detect(IplImage* imgTonedImage,IplImage* imgRealFeed, const Point& center
                     to_string(calcDistance(*(defectArray[3].depth_point), center))+"\n"+
                     "손목길이 : "+
                     to_string(calcDistance(*(defectArray[1].depth_point), *(defectArray[2].depth_point)))+"\n"+
-                    "중심정과 각 손목점과의 거리 : "+
+                    "중심점과 각 손목점과의 거리 : "+
                     to_string(calcDistance(*(defectArray[1].depth_point), center))+" |\t"+
                     to_string(calcDistance(*(defectArray[2].depth_point), center))+"\n";
                     
@@ -244,9 +244,9 @@ void writeFile(String savePath, String info){
 int main(){
     String info="";
     //이미지가 저장되어 있는 PATH
-    String filePath = "/Users/jeongsooha/MyDesktop/testpictures/";
+    String filePath = "./images/";
     //txt파일을 저장할 PATH
-    String savePath = "/Users/jeongsooha/MyDesktop/testpictures/";
+    String savePath = "./";
     
     //불러올 이미지 이름
     String imgName = "ft5";
@@ -254,7 +254,6 @@ int main(){
     //테스트할 이미지
     //Xcode에서는 PATH 설정에 유의
     Mat image = imread(filePath+imgName+".JPG");
-    
     //txt를 저장할 PATH 설정
     savePath = savePath+imgName+".txt";
     
