@@ -21,7 +21,7 @@ using namespace std;
 using namespace cv;
 
 // Method to get Skin Tone
-Mat getHandMask1(const Mat& image){
+Mat getHandMask(const Mat& image){
     //컬러 공간 변환 BGR->YCrCb
     int Y_MIN = 0;
     int Y_MAX = 255;
