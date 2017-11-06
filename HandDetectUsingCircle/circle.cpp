@@ -23,7 +23,7 @@ using namespace cv;
 #define SCALE 1.5
 
 // Method to get Skin Tone
-Mat getHandMask1(const Mat& image){
+Mat getHandMask(const Mat& image){
     //컬러 공간 변환 BGR->YCrCb
     int Y_MIN = 0;
     int Y_MAX = 255;
@@ -204,18 +204,18 @@ String detect(IplImage* imgTonedImage,IplImage* imgRealFeed, const Point& center
                            calcDistance(*(defectArray[3].start), center));
                     printf("손목길이 %f \n", calcDistance(*(defectArray[1].depth_point), *(defectArray[2].depth_point)));
                     cvLine(imgRealFeed, *(defectArray[1].depth_point), *(defectArray[2].depth_point),CV_RGB(255,255,0),1, CV_AA, 0 );
-                    printf("중심점과 각 손목점과의 거리:\n %f %f\n",
+                    printf("중심 점과 각 손목 점과의 거리:\n %f %f\n",
                            calcDistance(*(defectArray[1].depth_point), center),
                            calcDistance(*(defectArray[2].depth_point), center));
                     
-                    info = "중심점과 각 손가락 사이의 길이 : "+
+                    info = "중심 점과 각 손가락 사이의 길이 : "+
                     to_string(calcDistance(*(defectArray[0].depth_point), center))+" |\t"+
                     to_string(calcDistance(*(defectArray[5].depth_point), center))+" |\t"+
                     to_string(calcDistance(*(defectArray[4].depth_point), center))+" |\t"+
                     to_string(calcDistance(*(defectArray[3].depth_point), center))+"\n"+
                     "손목길이 : "+
                     to_string(calcDistance(*(defectArray[1].depth_point), *(defectArray[2].depth_point)))+"\n"+
-                    "중심점과 각 손목점과의 거리 : "+
+                    "중심 점과 각 손목 점과의 거리 : "+
                     to_string(calcDistance(*(defectArray[1].depth_point), center))+" |\t"+
                     to_string(calcDistance(*(defectArray[2].depth_point), center))+"\n";
                     
@@ -266,7 +266,7 @@ int main(){
     IplImage *rawImage = 0, *yuvImage = 0;
     
     //Mask이미지 저장
-    Mat mask=getHandMask1(image);
+    Mat mask=getHandMask(image);
     
     //침식 함수 : 필터 내부의 가장 낮은(어두운)값으로 변환(end연산)
     erode(mask, mask, Mat(3, 3, CV_8U, Scalar(1)), Point(-1, -1), 2);
