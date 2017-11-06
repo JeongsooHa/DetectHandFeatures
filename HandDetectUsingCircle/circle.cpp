@@ -20,25 +20,26 @@
 using namespace std;
 using namespace cv;
 
+#define SCALE 1.7
+
 // Method to get Skin Tone
 Mat getHandMask(const Mat& image){
     //컬러 공간 변환 BGR->YCrCb
     int Y_MIN = 0;
     int Y_MAX = 255;
-    int Cr_MIN = 133;
-    int Cr_MAX = 173;
-    int Cb_MIN = 77;
-    int Cb_MAX = 127;
+    int Cr_MIN = 133; //128
+    int Cr_MAX = 173; //173
+    int Cb_MIN = 77; //77
+    int Cb_MAX = 127; //127
     Mat YCrCb;
-    
+
     // 이미지 포맷 변환
     cvtColor(image, YCrCb, COLOR_BGR2YCrCb);
-    
+
     // 피부색이 정의된 색의 범위에 포함되는지 확인하고 포함되면 0으로 나머지는 1로 변환
     inRange(YCrCb,Scalar(Y_MIN,Cr_MIN,Cb_MIN),Scalar(Y_MAX,Cr_MAX,Cb_MAX),YCrCb);
-    
+
     return YCrCb;
-    
 }
 
 //CvPoint와 CvPoint의 거리 계산
@@ -73,6 +74,7 @@ int getFingerCount(const Mat& mask, Point center, double radius, double scale=2.
     //손가락 개수를 세기 위한 원 그리기
     Mat cImg(mask.size(), CV_8U, Scalar(0));
     circle(cImg, center, radius*scale, Scalar(255));
+    //circle(cImg, center, (int)(radius*SCALE), Scalar(255, 0, 0), 2);
     
     //원의 외곽선을 저장할 벡터
     vector<vector<Point>> contours;
@@ -231,7 +233,21 @@ String detect(IplImage* imgTonedImage,IplImage* imgRealFeed, const Point& center
     }
     return info;
 }
+Mat blackFilter(const Mat &image){
+    Mat mask(image.size(), CV_8UC3, Scalar(0,0,0));
+    mask = image.clone();
 
+    for ( int i = 0 ;i < mask.rows; i++){
+        for ( int j =0; j <mask.cols;j++){
+            if(mask.at<Vec3b>(i,j)[0]<=48 &&mask.at<Vec3b>(i,j)[0]<=72 &&mask.at<Vec3b>(i,j)[0]<=73){
+                mask.at<Vec3b>(i,j)[0] = 0;
+                mask.at<Vec3b>(i,j)[1] = 0;
+                mask.at<Vec3b>(i,j)[2] = 0;
+            }
+        }
+    }
+    return mask;
+}
 //텍스트 파일에 저장
 void writeFile(String savePath, String info){
     cout << "writeFile..." <<endl;
@@ -246,37 +262,45 @@ int main(){
     //이미지가 저장되어 있는 PATH
     String filePath = "./images/";
     //txt파일을 저장할 PATH
-    String savePath = "./";
+    String savePath = "./outputtxt/";
     
     //불러올 이미지 이름
-    String imgName = "ft5";
+    String imgName = "HB4";
     
     //테스트할 이미지
     //Xcode에서는 PATH 설정에 유의
-    Mat image = imread(filePath+imgName+".JPG");
+    Mat image = imread(filePath+imgName+".jpg");
+    
     //txt를 저장할 PATH 설정
     savePath = savePath+imgName+".txt";
     
     //이미지 크기 변환
-    cv::resize( image, image, cv::Size( 450, 600), 0, 0, CV_INTER_NN );
+    cv::resize(image,image, cv::Size(450, 600), 0, 0, CV_INTER_NN );
     
     Mat originimage = image.clone();
     IplImage *rawImage = 0, *yuvImage = 0;
     
-    //Mask이미지 저장
-    Mat mask=getHandMask(image);
+    Mat mask = blackFilter(image);
+    cv::imshow("blackFiltered image",mask);
     
-    //침식 함수 : 필터 내부의 가장 낮은(어두운)값으로 변환(end연산)
+    //Mask이미지 저장
+    mask=getHandMask(mask);
+    cv::imshow("mask", mask);
+    //침식 함수 : 필터 내부의 가장 낮은(어두운)값으로 변환(and연산)
     erode(mask, mask, Mat(3, 3, CV_8U, Scalar(1)), Point(-1, -1), 2);
+    
+    cv::imshow("erode_mask", mask);
+    //imwrite("./outputimages/"+imgName+"_mask.jpg",mask);
     
     double radius;
     
     //손바닥의 중간점을 Point형으로 반환
     Point center=getHandCenter(mask, radius);
+    
     info = "손바닥 중심점 좌표 : "+to_string(center.x)+", "+to_string(center.y)+"\n";
     info = info + "반지름 : "+to_string(radius)+"\n";
     //손바닥 중간점을 이용해 손가락 개수를 파악
-    int fingernum = getFingerCount(mask, center, radius);
+    int fingernum = getFingerCount(mask, center, radius,SCALE);
     
     cout<<"손바닥 중심점 좌표:"<<center<<", 반지름:"<<radius<<", 손가락 개수"<<fingernum<<endl;
     
@@ -303,13 +327,13 @@ int main(){
     circle(image, center, 5, Scalar(255, 0, 0), -1);
     
     //손바닥 영역 그리기
-    circle(image, center, (int)(radius*1.5), Scalar(255, 0, 0), 2);
+    circle(image, center, (int)(radius*SCALE), Scalar(255, 0, 0), 2);
     
     //이미지에 대한 정보가 테스트 파일에 저장
     writeFile(savePath, info);
-    
+    imwrite("./outputimages/"+imgName+".jpg",image);
     imshow("Detect points on Image", image);
-
+    
     waitKey(0);
     
 }
