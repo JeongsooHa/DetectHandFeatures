@@ -20,6 +20,8 @@
 using namespace std;
 using namespace cv;
 
+#define SCALE 1.5
+
 // Method to get Skin Tone
 Mat getHandMask1(const Mat& image){
     //컬러 공간 변환 BGR->YCrCb
@@ -249,11 +251,11 @@ int main(){
     String savePath = "./";
     
     //불러올 이미지 이름
-    String imgName = "ft5";
+    String imgName = "KB5";
     
     //테스트할 이미지
     //Xcode에서는 PATH 설정에 유의
-    Mat image = imread(filePath+imgName+".JPG");
+    Mat image = imread(filePath+imgName+".jpg");
     //txt를 저장할 PATH 설정
     savePath = savePath+imgName+".txt";
     
@@ -276,7 +278,7 @@ int main(){
     info = "손바닥 중심점 좌표 : "+to_string(center.x)+", "+to_string(center.y)+"\n";
     info = info + "반지름 : "+to_string(radius)+"\n";
     //손바닥 중간점을 이용해 손가락 개수를 파악
-    int fingernum = getFingerCount(mask, center, radius);
+    int fingernum = getFingerCount(mask, center, radius,SCALE);
     
     cout<<"손바닥 중심점 좌표:"<<center<<", 반지름:"<<radius<<", 손가락 개수"<<fingernum<<endl;
     
@@ -303,7 +305,7 @@ int main(){
     circle(image, center, 5, Scalar(255, 0, 0), -1);
     
     //손바닥 영역 그리기
-    circle(image, center, (int)(radius*1.5), Scalar(255, 0, 0), 2);
+    circle(image, center, (int)(radius*SCALE), Scalar(255, 0, 0), 2);
     
     //이미지에 대한 정보가 테스트 파일에 저장
     writeFile(savePath, info);
